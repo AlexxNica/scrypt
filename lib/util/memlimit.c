@@ -96,7 +96,7 @@ memlimit_sysctl_hw(size_t * memlimit, int mibleaf)
 	if (sysctlval > SIZE_MAX)
 		*memlimit = SIZE_MAX;
 	else
-		*memlimit = sysctlval;
+		*memlimit = (size_t)sysctlval;
 #else
 	*memlimit = sysctlval;
 #endif
@@ -138,7 +138,7 @@ memlimit_sysinfo(size_t * memlimit)
 	if (totalmem > SIZE_MAX)
 		*memlimit = SIZE_MAX;
 	else
-		*memlimit = totalmem;
+		*memlimit = (size_t)totalmem;
 #else
 	*memlimit = totalmem;
 #endif
@@ -163,7 +163,7 @@ memlimit_rlimit(size_t * memlimit)
 		return (1);
 	if ((rl.rlim_cur != RLIM_INFINITY) &&
 	    ((uint64_t)rl.rlim_cur < memrlimit))
-		memrlimit = rl.rlim_cur;
+		memrlimit = (uint64_t)rl.rlim_cur;
 #endif
 
 	/* ... RLIMIT_DATA... */
@@ -171,7 +171,7 @@ memlimit_rlimit(size_t * memlimit)
 		return (1);
 	if ((rl.rlim_cur != RLIM_INFINITY) &&
 	    ((uint64_t)rl.rlim_cur < memrlimit))
-		memrlimit = rl.rlim_cur;
+		memrlimit = (uint64_t)rl.rlim_cur;
 
 	/* ... and RLIMIT_RSS. */
 #ifdef RLIMIT_RSS
@@ -179,7 +179,7 @@ memlimit_rlimit(size_t * memlimit)
 		return (1);
 	if ((rl.rlim_cur != RLIM_INFINITY) &&
 	    ((uint64_t)rl.rlim_cur < memrlimit))
-		memrlimit = rl.rlim_cur;
+		memrlimit = (uint64_t)rl.rlim_cur;
 #endif
 
 	/* Return the value, but clamp to SIZE_MAX if necessary. */
@@ -187,7 +187,7 @@ memlimit_rlimit(size_t * memlimit)
 	if (memrlimit > SIZE_MAX)
 		*memlimit = SIZE_MAX;
 	else
-		*memlimit = memrlimit;
+		*memlimit = (size_t)memrlimit;
 #else
 	*memlimit = memrlimit;
 #endif
@@ -216,8 +216,11 @@ memlimit_sysconf(size_t * memlimit)
 	/* Read the two limits. */
 	if (((pagesize = sysconf(_SC_PAGE_SIZE)) == -1) ||
 	    ((physpages = sysconf(_SC_PHYS_PAGES)) == -1)) {
-		/* Did an error occur? */
-		if (errno != 0)
+		/*
+		 * Did an error occur?  OS X may return EINVAL due to not
+		 * supporting _SC_PHYS_PAGES in spite of defining it.
+		 */
+		if (errno != 0 && errno != EINVAL)
 			return (1);
 
 		/* If not, there is no limit. */
@@ -232,7 +235,7 @@ memlimit_sysconf(size_t * memlimit)
 	if (totalmem > SIZE_MAX)
 		*memlimit = SIZE_MAX;
 	else
-		*memlimit = totalmem;
+		*memlimit = (size_t)totalmem;
 #else
 	*memlimit = totalmem;
 #endif

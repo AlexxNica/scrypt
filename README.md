@@ -23,6 +23,16 @@ presented at the [BSDCan'09](http://www.bsdcan.org/2009/) conference:
 * Conference presentation slides:
   [PDF](http://www.tarsnap.com/scrypt/scrypt-slides.pdf).
 
+More details are given in the Internet Engineering Task Force
+(IETF)
+[RFC 7914: The scrypt Password-Based Key Derivation Function](https://tools.ietf.org/html/rfc7914).
+
+It has been demonstrated that scrypt is maximally memory-hard:
+
+* J. Alwen, B. Chen, K. Pietrzak, L. Reyzin, S. Tessaro,
+  [Scrypt is Maximally Memory-Hard](http://eprint.iacr.org/2016/989),
+  Cryptology ePrint Archive: Report 2016/989.
+
 
 The scrypt encryption utility
 -----------------------------
@@ -101,16 +111,24 @@ int crypto_scrypt(const uint8_t *, size_t, const uint8_t *, size_t, uint64_t,
 Building
 --------
 
-Normal users should only use the signed tarballs from https://tarsnap.com, but
-for experimental development, use:
- 
-    autoreconf -i
+:exclamation: We strongly recommend that people use the latest
+official release tarball on https://www.tarsnap.com/scrypt.html,
+and build with:
+
     ./configure
     make
 
-In order to support the `AX_CFLAGS_WARN_ALL` autoconf directive, you will need
-to install the autoconf archive.  On Debian systems, use the
-`autoconf-archive` package; on FreeBSD, use `devel/autoconf-archive`.
+> For experimental development from git, build with:
+>
+>     autoreconf -i
+>     ./configure
+>     make
+>
+> In order to support the `AX_CFLAGS_WARN_ALL` autoconf directive,
+> you will need to install the autoconf archive.  On Debian
+> systems, use the `autoconf-archive` package; on FreeBSD, use
+> `devel/autoconf-archive`.  You must have automake 1.11.2 or
+> higher.
 
 
 Testing

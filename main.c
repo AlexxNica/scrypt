@@ -25,13 +25,13 @@
  */
 #include "scrypt_platform.h"
 
-#include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "getopt.h"
+#include "humansize.h"
 #include "insecure_memzero.h"
 #include "readpass.h"
 #include "scryptenc.h"
@@ -42,9 +42,9 @@ usage(void)
 {
 
 	fprintf(stderr,
-	    "usage: scrypt {enc | dec} [-M maxmem] [-m maxmemfrac]"
-	    " [-t maxtime] [-v] [-P] infile\n"
-	    "              [outfile]\n"
+	    "usage: scrypt {enc | dec} [-f] [-M maxmem]"
+	    " [-m maxmemfrac]\n"
+	    "              [-t maxtime] [-v] [-P] infile [outfile]\n"
 	    "       scrypt --version\n");
 	exit(1);
 }
@@ -57,6 +57,8 @@ main(int argc, char *argv[])
 	int devtty = 1;
 	int dec = 0;
 	size_t maxmem = 0;
+	int force_resources = 0;
+	uint64_t maxmem64;
 	double maxmemfrac = 0.5;
 	double maxtime = 300.0;
 	const char * ch;
@@ -88,8 +90,19 @@ main(int argc, char *argv[])
 	/* Parse arguments. */
 	while ((ch = GETOPT(argc, argv)) != NULL) {
 		GETOPT_SWITCH(ch) {
+		GETOPT_OPT("-f"):
+			force_resources = 1;
+			break;
 		GETOPT_OPTARG("-M"):
-			maxmem = strtoumax(optarg, NULL, 0);
+			if (humansize_parse(optarg, &maxmem64)) {
+				warn0("Could not parse the parameter to -M.");
+				exit(1);
+			}
+			if (maxmem64 > SIZE_MAX) {
+				warn0("The parameter to -M is too large.");
+				exit(1);
+			}
+			maxmem = (size_t)maxmem64;
 			break;
 		GETOPT_OPTARG("-m"):
 			maxmemfrac = strtod(optarg, NULL);
@@ -146,7 +159,8 @@ main(int argc, char *argv[])
 	/* Encrypt or decrypt. */
 	if (dec)
 		rc = scryptdec_file(infile, outfile, (uint8_t *)passwd,
-		    strlen(passwd), maxmem, maxmemfrac, maxtime, verbose);
+		    strlen(passwd), maxmem, maxmemfrac, maxtime, verbose,
+		    force_resources);
 	else
 		rc = scryptenc_file(infile, outfile, (uint8_t *)passwd,
 		    strlen(passwd), maxmem, maxmemfrac, maxtime, verbose);
